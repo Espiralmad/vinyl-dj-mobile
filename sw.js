@@ -1,6 +1,6 @@
 // Minimal offline cache for the app shell. Music files are NOT cached —
 // they come from the user's Files / iCloud Drive at runtime.
-const CACHE = 'vinyl-dj-mobile-v2';
+const CACHE = 'vinyl-dj-mobile-v3';
 const SHELL = [
   'index.html',
   'manifest.json',
@@ -20,10 +20,23 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Cache-first for same-origin, and cache new same-origin GETs at runtime so
+// the catalog (catalog.json) becomes available offline after the first load.
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  // Only serve the app shell from cache; everything else goes to network.
-  if (url.origin === location.origin) {
-    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
-  }
+  if (url.origin !== location.origin) return;
+  e.respondWith((async () => {
+    const cached = await caches.match(e.request);
+    if (cached) return cached;
+    try {
+      const resp = await fetch(e.request);
+      if (resp.ok && e.request.method === 'GET') {
+        const c = await caches.open(CACHE);
+        c.put(e.request, resp.clone());
+      }
+      return resp;
+    } catch (err) {
+      return cached || Response.error();
+    }
+  })());
 });
