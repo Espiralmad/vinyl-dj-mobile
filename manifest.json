@@ -4,7 +4,7 @@
   "description": "Dos platos, crossfader y EQ para pinchar desde el iPhone.",
   "start_url": "index.html",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "background_color": "#141418",
   "theme_color": "#141418",
   "icons": [

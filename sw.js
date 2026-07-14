@@ -1,6 +1,6 @@
 // Minimal offline cache for the app shell. Music files are NOT cached —
 // they come from the user's Files / iCloud Drive at runtime.
-const CACHE = 'vinyl-dj-mobile-v1';
+const CACHE = 'vinyl-dj-mobile-v2';
 const SHELL = [
   'index.html',
   'manifest.json',
