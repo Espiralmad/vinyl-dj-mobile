@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prueba fondo">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f13">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Prueba de fondo · Vinyl DJ</title>
+<!--
+  Prueba para el modo coche.
+
+  En el coche el iPhone va bloqueado (CarPlay usa su propia pantalla), y la app
+  tiene que seguir sonando y cambiando de tema sin que nadie la mire. Si iOS
+  deja hacer eso a una web, y de qué manera, no se puede saber mirando el
+  código: hay que probarlo en el teléfono. Esta página prueba las tres maneras
+  posibles con temas inventados, y apunta lo que pasa para poder leerlo después.
+-->
+<style>
+  :root{ --bg:#0f0f13; --panel:#1b1b22; --txt:#ecebe6; --sub:#9a98a0; --a:#c8683c; --b:#2fb6a6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--txt); font:16px/1.45 -apple-system,system-ui,sans-serif;
+        padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px); }
+  h1{ font-size:21px; margin:0 0 10px; }
+  h2{ font-size:15px; color:var(--sub); text-transform:uppercase; letter-spacing:.06em; margin:22px 0 8px; }
+  ol{ margin:0 0 16px; padding-left:22px; color:var(--sub); }
+  ol b{ color:var(--txt); }
+  .pruebas{ display:grid; gap:10px; }
+  button{ font:inherit; color:var(--txt); background:var(--panel); border:1px solid #2c2c36; border-radius:14px;
+          padding:14px 16px; text-align:left; }
+  button:active{ transform:scale(.98); }
+  .pruebas button b{ display:block; font-size:18px; }
+  .pruebas button span{ color:var(--sub); font-size:14px; }
+  .pruebas button.on{ border-color:var(--a); box-shadow:0 0 0 1px var(--a) inset; }
+  #estado{ margin:14px 0 8px; padding:12px 14px; border-radius:12px; background:#15151b; font-weight:600; }
+  #parar{ width:100%; text-align:center; }
+  #respuestas{ margin-top:14px; padding:12px 14px; border-radius:12px; background:#15151b; }
+  #respuestas p{ margin:0 0 8px; }
+  .fila{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .fila button{ padding:10px 16px; text-align:center; min-width:52px; }
+  .fila button.elegida{ background:var(--b); color:#0f0f13; border-color:var(--b); }
+  pre{ white-space:pre-wrap; background:#15151b; border-radius:12px; padding:12px; font-size:13px; line-height:1.5;
+       max-height:50vh; overflow:auto; margin:0 0 10px; }
+  .botones{ display:flex; gap:10px; }
+  .botones button{ flex:1; text-align:center; }
+</style>
+</head>
+<body>
+
+<h1>¿Sigue sonando con el iPhone bloqueado?</h1>
+<ol>
+  <li>Hazla desde el <b>icono en la pantalla de inicio</b> (Compartir → Añadir a pantalla de inicio), que es como irá en el coche.</li>
+  <li>Pulsa una prueba y <b>bloquea el iPhone enseguida</b> con el botón lateral.</li>
+  <li>Escucha unos 2 minutos. Cada tema suena con <b>pitidos</b>: 1 pitido = tema 1, 2 pitidos = tema 2… hasta 4. Fíjate hasta qué tema llegas.</li>
+  <li>Con el iPhone bloqueado, mira si en la pantalla de bloqueo sale <b>«Tema… · Prueba Vinyl DJ»</b>. Si sale, pulsa <b>⏭</b> una vez.</li>
+  <li>Desbloquea y contesta las dos preguntas. Luego la siguiente prueba.</li>
+</ol>
+
+<div class="pruebas">
+  <button data-modo="1"><b>Prueba 1</b><span>Mezcla dentro de la app (como ahora)</span></button>
+  <button data-modo="2"><b>Prueba 2</b><span>Mezcla dentro de la app, sacada por el reproductor del iPhone</span></button>
+  <button data-modo="3"><b>Prueba 3</b><span>Reproductor sencillo, un tema detrás de otro sin mezcla</span></button>
+</div>
+
+<div id="estado">Parado</div>
+<button id="parar">■ Parar</button>
+
+<div id="respuestas" hidden>
+  <p>¿Hasta qué tema llegaste a oír?</p>
+  <div class="fila" data-pregunta="Hasta qué tema se oyó">
+    <button>0</button><button>1</button><button>2</button><button>3</button><button>4</button>
+  </div>
+  <p>¿Salió el título en la pantalla bloqueada?</p>
+  <div class="fila" data-pregunta="Título en la pantalla bloqueada">
+    <button>Sí</button><button>No</button><button>No miré</button>
+  </div>
+</div>
+
+<h2>Registro</h2>
+<pre id="log"></pre>
+<div class="botones">
+  <button id="copiar">Copiar resultados</button>
+  <button id="borrar">Borrar</button>
+</div>
+
+<audio id="salida" playsinline></audio>
+
+<script>
+'use strict';
+
+const SR=44100, DUR=30, MEZCLA_EN=23, MEZCLA=5, TEMAS=4;
+const AC=window.AudioContext||window.webkitAudioContext;
+const $log=document.getElementById('log'), $estado=document.getElementById('estado');
+const $respuestas=document.getElementById('respuestas');
+const salida=document.getElementById('salida');
+
+// ---------------------------------------------------------------------------
+// El registro
+// ---------------------------------------------------------------------------
+//
+// Se guarda en el teléfono con cada línea: si iOS cierra la página mientras
+// está bloqueada, al volver a abrirla sigue ahí lo que pasó hasta ese momento.
+
+const CLAVE='pruebaFondo';
+let pruebas=[];
+try{ pruebas=JSON.parse(localStorage.getItem(CLAVE)||'[]'); }catch(e){ pruebas=[]; }
+let run=null, t0=0;
+
+function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(pruebas.slice(-9))); }catch(e){} }
+function mmss(ms){ const s=Math.max(0,Math.round(ms/1000)); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+function log(txt){
+  if(!run) return;
+  run.lineas.push(`${mmss(Date.now()-t0)}  ${txt}`);
+  guardar(); pintar();
+}
+function pintar(){
+  $log.textContent = pruebas.map(p=>`── ${p.titulo} · ${p.fecha}\n`+p.lineas.join('\n')).join('\n\n') || 'Todavía no hay pruebas.';
+  $log.scrollTop=$log.scrollHeight;
+}
+
+function entorno(){
+  const v=(navigator.userAgent.match(/OS (\d+)_(\d+)/)||[]).slice(1).join('.');
+  return `iOS ${v||'?'} · ${navigator.standalone?'desde el icono':'en Safari'}`
+    + ` · audioSession ${'audioSession' in navigator?'sí':'no'} · mediaSession ${'mediaSession' in navigator?'sí':'no'}`;
+}
+
+// Un latido cada segundo. Si entre dos latidos pasa mucho más, es que iOS
+// tuvo el programa congelado: el audio puede seguir, pero la app no podría
+// preparar el siguiente tema.
+let latido=null, ultimo=0;
+function empezarLatido(){
+  clearInterval(latido); ultimo=Date.now();
+  latido=setInterval(()=>{
+    const ahora=Date.now(), hueco=ahora-ultimo;
+    if(hueco>2500 && run){ run.dormido=(run.dormido||0)+hueco; log(`⚠ la app estuvo congelada ${Math.round(hueco/1000)} s`); }
+    ultimo=ahora;
+  },1000);
+}
+document.addEventListener('visibilitychange', ()=> log(document.hidden ? 'pantalla bloqueada / app en segundo plano' : 'pantalla desbloqueada'));
+
+// ---------------------------------------------------------------------------
+// Temas inventados
+// ---------------------------------------------------------------------------
+//
+// Bombo, un arpegio y pitidos. Cada tema va un poco más agudo que el anterior y
+// repite cada 8 segundos tantos pitidos como su número, para poder contar de
+// oído en qué tema estás sin mirar la pantalla.
+
+const _temas={};
+function sintetizar(n){
+  if(_temas[n]) return _temas[n];
+  const len=DUR*SR, d=new Float32Array(len);
+  const raiz=196*Math.pow(2,(n-1)*4/12), patron=[0,4,7,12,7,4,0,7];
+  const grupos=[0.4,6,14,22];
+  for(let i=0;i<len;i++){
+    const t=i/SR; let v=0;
+    const tb=t%0.5;
+    if(tb<0.2){ const fase=2*Math.PI*(50*tb+70*(1-Math.exp(-30*tb))/30); v+=0.55*Math.sin(fase)*Math.exp(-tb*14); }
+    const nota=Math.floor(t/0.25), tn=t-nota*0.25, f=raiz*Math.pow(2,patron[nota%patron.length]/12);
+    v+=0.2*(Math.sin(2*Math.PI*f*tn)+0.3*Math.sin(4*Math.PI*f*tn))*Math.exp(-tn*6);
+    for(const g of grupos){
+      for(let k=0;k<n;k++){
+        const tp=t-(g+k*0.3);
+        if(tp>=0 && tp<0.14) v+=0.35*Math.sin(2*Math.PI*1760*tp)*Math.min(1,tp*200,(0.14-tp)*200);
+      }
+    }
+    const env=Math.min(1, t/0.05, (DUR-t)/6);
+    d[i]=Math.max(-0.95,Math.min(0.95,v*env*0.8));   // 0,8: que bombo, arpegio y pitidos juntos no saturen
+  }
+  return (_temas[n]=d);
+}
+
+function aWav(datos){
+  const n=datos.length, b=new ArrayBuffer(44+n*2), v=new DataView(b);
+  const s=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); };
+  s(0,'RIFF'); v.setUint32(4,36+n*2,true); s(8,'WAVE'); s(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,SR,true); v.setUint32(28,SR*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  s(36,'data'); v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++) v.setInt16(44+i*2, Math.round(datos[i]*32767), true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'}));
+}
+
+// ---------------------------------------------------------------------------
+// Pantalla de bloqueo y botones (volante, AirPods, CarPlay)
+// ---------------------------------------------------------------------------
+
+function ponerTitulo(n){
+  $estado.textContent=`▶ Tema ${n} de ${TEMAS} · ${run?run.titulo:''}`;
+  if(!('mediaSession' in navigator)) return;
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({
+      title:`Tema ${n} de ${TEMAS}`, artist:'Prueba Vinyl DJ', album:run?run.titulo:'',
+      artwork:[{src:'icons/icon-512.png', sizes:'512x512', type:'image/png'}],
+    });
+    navigator.mediaSession.playbackState='playing';
+  }catch(e){ log('no se pudo poner el título: '+e.message); }
+}
+
+let acciones={};   // lo que hace cada botón en la prueba en curso
+function prepararBotones(){
+  if(!('mediaSession' in navigator)) return;
+  const nombres={play:'▶ reproducir', pause:'❚❚ pausa', nexttrack:'⏭ siguiente', previoustrack:'⏮ anterior'};
+  for(const [a,nombre] of Object.entries(nombres)){
+    try{
+      navigator.mediaSession.setActionHandler(a, ()=>{
+        log(`botón del sistema: ${nombre}`);
+        if(acciones[a]) acciones[a](); else if(a==='nexttrack' || a==='previoustrack') log('   (en esta prueba solo se apunta)');
+      });
+    }catch(e){}
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pruebas 1 y 2: mezcla dentro de la app (Web Audio)
+// ---------------------------------------------------------------------------
+//
+// Como el automix: dos platos, el siguiente tema cargado mientras suena el
+// actual, y el cruce hecho a su hora. La diferencia con la app de ahora es que
+// el cruce se deja programado en el reloj del audio en vez de decidirlo la
+// pantalla fotograma a fotograma, que con el iPhone bloqueado no se dibuja.
+//
+// El tercer tema no se programa hasta que acaba el primero —igual que en la
+// app, donde el plato tiene que quedar libre para cargar otro—, así que para
+// oírlo la app tiene que estar despierta. Si con el iPhone bloqueado solo
+// suenan dos temas, es que iOS congela la app aunque el audio siga.
+
+let ctx=null, flujo=null, fuentes=[], pausadoAMano=false;
+
+const ESTADOS={running:'sonando', suspended:'suspendido', interrupted:'interrumpido (llamada, Siri…)', closed:'cerrado'};
+function contexto(){
+  if(ctx) return ctx;
+  ctx=new AC();
+  ctx.onstatechange=()=>{
+    log(`motor de audio: ${ESTADOS[ctx.state]||ctx.state}`);
+    if(run && run.activo && run.modo!==3 && ctx.state!=='running' && !pausadoAMano){
+      ctx.resume().then(()=>log('   …vuelto a arrancar'), e=>log('   …no vuelve a arrancar: '+e.message));
+    }
+  };
+  return ctx;
+}
+
+function pruebaMezcla(porReproductor){
+  const c=contexto();
+  // Todo lo que exige que haya un toque del usuario va antes de cualquier espera.
+  if(c.state!=='running') c.resume();
+  let out;
+  if(porReproductor){
+    if(!flujo) flujo=c.createMediaStreamDestination();
+    out=flujo;
+    salida.removeAttribute('src'); salida.srcObject=flujo.stream;
+    salida.play().then(()=>log('reproductor del iPhone en marcha'), e=>log('✗ el reproductor del iPhone no arrancó: '+e.message));
+  } else {
+    salida.pause(); salida.srcObject=null;
+    out=c.destination;
+  }
+
+  const miRun=run;
+  const vivo=()=> run===miRun && miRun.activo;
+
+  function programar(n, cuando){
+    const buf=c.createBuffer(1, DUR*SR, SR);
+    buf.getChannelData(0).set(sintetizar(n));
+    const src=c.createBufferSource(); src.buffer=buf;
+    const g=c.createGain(); src.connect(g); g.connect(out);
+    if(n===1) g.gain.setValueAtTime(1,cuando);
+    else { g.gain.setValueAtTime(0,cuando); g.gain.linearRampToValueAtTime(1,cuando+MEZCLA); }
+    if(n<TEMAS){ g.gain.setValueAtTime(1,cuando+MEZCLA_EN); g.gain.linearRampToValueAtTime(0,cuando+MEZCLA_EN+MEZCLA); }
+    src.start(cuando); src.stop(cuando+DUR);
+    fuentes.push(src);
+
+    setTimeout(()=>{
+      if(!vivo()) return;
+      const tarde=c.currentTime-cuando;
+      log(`Tema ${n} empieza`+(tarde>1.5?` (la app se enteró ${tarde.toFixed(0)} s tarde)`:''));
+      ponerTitulo(n);
+    }, Math.max(0,(cuando-c.currentTime)*1000));
+
+    src.onended=()=>{
+      if(!vivo()) return;
+      const tarde=c.currentTime-(cuando+DUR);
+      log(`Tema ${n} terminado`+(tarde>1.5?` (la app se enteró ${tarde.toFixed(0)} s tarde)`:''));
+      const sig=n+2, cuandoSig=cuando+2*MEZCLA_EN;
+      if(sig<=TEMAS){
+        if(c.currentTime > cuandoSig-0.2) log(`✗ Tema ${sig}: no dio tiempo a prepararlo`);
+        else { programar(sig, cuandoSig); log(`Tema ${sig} preparado en el plato libre`); }
+      }
+      if(n===TEMAS) terminar('Fin de la prueba.');
+    };
+  }
+
+  const inicio=c.currentTime+0.3;
+  programar(1, inicio);
+  programar(2, inicio+MEZCLA_EN);
+
+  acciones={
+    pause:()=>{ pausadoAMano=true; c.suspend(); if(porReproductor) salida.pause(); navigator.mediaSession.playbackState='paused'; },
+    play: ()=>{ pausadoAMano=false; c.resume(); if(porReproductor) salida.play(); navigator.mediaSession.playbackState='playing'; },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Prueba 3: reproductor sencillo (un <audio>, un tema detrás de otro)
+// ---------------------------------------------------------------------------
+//
+// Es como funcionan las webs de música normales. iOS lo trata como música de
+// verdad, pero no se puede mezclar: entre tema y tema hay un corte.
+
+const wavs={};
+const wav=n=> wavs[n]||(wavs[n]=aWav(sintetizar(n)));
+
+function pruebaReproductor(){
+  const miRun=run;
+  const vivo=()=> run===miRun && miRun.activo;
+  let n=1;
+  const poner=k=>{
+    n=k; salida.srcObject=null; salida.src=wav(k);
+    const p=salida.play();
+    log(`Tema ${k} empieza`); ponerTitulo(k);
+    if(p) p.catch(e=>log(`✗ Tema ${k} no arrancó: ${e.message}`));
+    if(k<TEMAS) setTimeout(()=>wav(k+1), 500);   // el siguiente, preparado con antelación
+  };
+  salida.onended=()=>{
+    if(!vivo()) return;
+    log(`Tema ${n} terminado`);
+    if(n<TEMAS) poner(n+1); else terminar('Fin de la prueba.');
+  };
+  acciones={
+    nexttrack:()=>{ if(n<TEMAS) poner(n+1); },
+    previoustrack:()=>{ if(n>1) poner(n-1); },
+    pause:()=>{ pausadoAMano=true; salida.pause(); navigator.mediaSession.playbackState='paused'; },
+    play: ()=>{ pausadoAMano=false; salida.play(); navigator.mediaSession.playbackState='playing'; },
+  };
+  poner(1);
+}
+
+salida.addEventListener('pause', ()=>{ if(run && run.activo && !salida.ended && !pausadoAMano) log('el reproductor del iPhone se ha pausado solo'); });
+
+// ---------------------------------------------------------------------------
+// Empezar, parar, contestar
+// ---------------------------------------------------------------------------
+
+const TITULOS={1:'Prueba 1 · mezcla en la app', 2:'Prueba 2 · mezcla + reproductor del iPhone', 3:'Prueba 3 · reproductor sencillo'};
+
+function empezar(modo){
+  if(run && run.activo) terminar('Se empezó otra prueba.');
+  run={titulo:TITULOS[modo], fecha:new Date().toLocaleString('es-ES'), lineas:[], activo:true, modo};
+  pruebas.push(run); t0=Date.now(); pausadoAMano=false; acciones={};
+  $respuestas.hidden=true;
+  $respuestas.querySelectorAll('button').forEach(b=>b.classList.remove('elegida'));
+  document.querySelectorAll('[data-modo]').forEach(b=>b.classList.toggle('on', +b.dataset.modo===modo));
+
+  log(entorno());
+  // Sin esto, el interruptor de silencio del iPhone puede apagar el audio de una web.
+  if(navigator.audioSession){ try{ navigator.audioSession.type='playback'; }catch(e){} }
+  prepararBotones();
+  empezarLatido();
+  if(modo===3) pruebaReproductor(); else pruebaMezcla(modo===2);
+  log('Bloquea ya el iPhone y escucha.');
+}
+
+function terminar(motivo){
+  if(!run) return;
+  const r=run;
+  r.activo=false;
+  fuentes.forEach(s=>{ try{ s.onended=null; s.stop(); }catch(e){} }); fuentes=[];
+  salida.onended=null; salida.pause();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState='none';
+  clearInterval(latido);
+  log(motivo);
+  if(r.dormido) log(`Resumen: la app estuvo congelada ${Math.round(r.dormido/1000)} s en total.`);
+  else log('Resumen: la app no se congeló en ningún momento.');
+  $estado.textContent='Parado';
+  document.querySelectorAll('[data-modo]').forEach(b=>b.classList.remove('on'));
+  $respuestas.hidden=false;
+}
+
+document.querySelectorAll('[data-modo]').forEach(b=> b.addEventListener('click', ()=> empezar(+b.dataset.modo)));
+document.getElementById('parar').addEventListener('click', ()=>{ if(run && run.activo) terminar('Parado a mano.'); });
+
+// Las respuestas se apuntan en la última prueba, para que el resultado copiado
+// lleve también lo que se oyó, que la app no puede saber.
+$respuestas.addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b || !run) return;
+  const fila=b.parentElement;
+  fila.querySelectorAll('button').forEach(x=>x.classList.toggle('elegida', x===b));
+  run.lineas=run.lineas.filter(l=>!l.startsWith('» '+fila.dataset.pregunta));
+  run.lineas.push(`» ${fila.dataset.pregunta}: ${b.textContent}`);
+  guardar(); pintar();
+});
+
+document.getElementById('copiar').addEventListener('click', async ev=>{
+  const btn=ev.currentTarget, txt=$log.textContent;
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  btn.textContent='Copiado ✓'; setTimeout(()=>btn.textContent='Copiar resultados', 1800);
+});
+document.getElementById('borrar').addEventListener('click', ()=>{ if(run && run.activo) terminar('Borrado.'); pruebas=[]; run=null; guardar(); pintar(); $respuestas.hidden=true; });
+
+pintar();
+// El primer tema de la prueba 3 se prepara ya: iOS solo deja arrancar el
+// reproductor justo al tocar, y fabricarlo en ese momento podría llegar tarde.
+setTimeout(()=>wav(1), 50);
+</script>
+</body>
+</html>
