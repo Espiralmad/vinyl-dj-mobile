@@ -55,7 +55,7 @@
   .bpm-tag{font-size:10px; font-weight:700; color:#0f0f13; background:#d8d8de; padding:2px 6px; border-radius:4px;}
 
   .platter-wrap{flex:1; display:flex; align-items:center; justify-content:center; min-width:0;}
-  .platter{position:relative; aspect-ratio:1/1; height:100%; max-height:100%; max-width:100%; border-radius:50%;}
+  .platter{position:relative; border-radius:50%; flex:0 0 auto;}   /* size set in JS to a perfect square */
   .spin{position:absolute; inset:0; border-radius:50%; will-change:transform;}
   .grooves{position:absolute; inset:0; border-radius:50%;}
   .deck.a .grooves{background:
@@ -67,8 +67,11 @@
   .marker{position:absolute; left:calc(50% - 2px); top:4%; width:4px; height:44%; border-radius:2px;
     background:#1b1b22;}
   .label{position:absolute; inset:34%; border-radius:50%; background:#161620; display:flex; align-items:center; justify-content:center;
-    box-shadow:inset 0 0 0 2px #00000033;}
+    box-shadow:inset 0 0 0 2px #00000033; overflow:hidden;}
   .label svg{width:52%; height:52%;}
+  .label .cover{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%; display:none;}
+  .label.has-cover svg{display:none;}
+  .label.has-cover .cover{display:block;}
   .deck.a .label .d{fill:var(--a2);} .deck.b .label .d{fill:var(--b2);}
 
   .bottom{display:flex; gap:6px;}
@@ -129,13 +132,76 @@
   .catrow button{width:34px; height:34px; border:none; border-radius:8px; font-weight:700; font-size:13px; color:#fff; flex:0 0 auto;}
   .catrow button.toa{background:var(--a);} .catrow button.tob{background:var(--b);}
 
+  /* Panel del automático: mismo lenguaje que el catálogo, para que no
+     parezca otra app pegada encima. */
+  .mixpop{position:fixed; inset:0; z-index:36; background:#0f0f13f7; display:none; flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 10px) 12px 12px;}
+  .mixpop.show{display:flex;}
+  .mixhead{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .mixhead strong{font-size:15px; margin-right:2px;}
+  .mixhead select{padding:10px; border-radius:10px; border:1px solid var(--btn2); background:var(--btn); color:var(--txt); font-size:13px; max-width:34%;}
+  .mixhead button{height:42px; padding:0 14px; border:none; border-radius:10px; background:var(--btn2); color:var(--txt); font-size:14px; font-weight:600; flex:0 0 auto;}
+  .mixhead button.go{background:var(--a); color:#fff;}
+  .mixhead button.go.on{background:#c0392b;}
+  .mixhead button.x{width:42px; padding:0;}
+  .mixstatus{color:var(--dim); font-size:12px; padding:6px 2px;}
+  .mixqueue{flex:1; overflow-y:auto; margin-top:4px; -webkit-overflow-scrolling:touch;}
+  .mixrow{display:flex; align-items:center; gap:8px; padding:8px 6px; border-bottom:1px solid #ffffff10;}
+  .mixrow.now{background:#ffffff0e; border-radius:8px;}
+  .mixrow .num{width:26px; text-align:right; color:var(--dim); font-size:12px; flex:0 0 auto; font-variant-numeric:tabular-nums;}
+  .mixrow .info{flex:1; min-width:0;}
+  .mixrow .info b{font-weight:600; font-size:14px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mixrow .info .sub{color:var(--dim); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mixrow .mv{width:30px; height:30px; border:none; border-radius:8px; background:var(--btn2); color:var(--txt); font-size:13px; flex:0 0 auto;}
+  .mixrow .del{width:30px; height:30px; border:none; border-radius:8px; background:#3a2226; color:#e88; font-size:14px; flex:0 0 auto;}
+  .mixempty{color:var(--dim); font-size:13px; text-align:center; padding:28px 12px; line-height:1.5;}
+
   #splash{position:fixed; inset:0; background:var(--bg); z-index:40; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;}
   #splash img{width:100px; height:100px; border-radius:22px;}
   #splash h1{font-size:20px; margin:0;}
   #splash p{color:var(--dim); font-size:13px; margin:0; max-width:300px;}
   #splash button{margin-top:6px; padding:12px 30px; font-size:16px; font-weight:700; border:none; border-radius:10px; background:var(--a); color:#fff;}
+  #splash button.sec{margin-top:0; background:var(--btn2);}
   input[type=file]{display:none;}
+
+  /* Modo coche: se lee de un vistazo y los botones se aciertan sin mirar.
+     Vale en vertical y en horizontal, según vaya el soporte del coche. */
+  body.en-coche #rotate{display:none !important;}
+  .cochepop{position:fixed; inset:0; z-index:50; background:#0b0b0f; display:none; flex-direction:column; gap:12px;
+    padding:calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 18px) calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 18px);}
+  .cochepop.show{display:flex;}
+  .ch-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .ch-top button{height:44px; padding:0 16px; border:none; border-radius:12px; background:var(--btn2); color:var(--txt); font-size:15px; font-weight:600;}
+  .ch-cola{color:var(--dim); font-size:15px; font-variant-numeric:tabular-nums;}
+  .ch-cuerpo{flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; gap:18px;}
+  .ch-portada{align-self:center; flex:0 0 auto; width:min(74vw,40vh); aspect-ratio:1; border-radius:18px; background:#161620;
+    overflow:hidden; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px #0008;}
+  .ch-portada img{width:100%; height:100%; object-fit:cover; display:none;}
+  .ch-portada.con img{display:block;} .ch-portada.con svg{display:none;}
+  .ch-portada svg{width:40%; height:40%;} .ch-portada .d{fill:var(--a2);}
+  .ch-lado{display:flex; flex-direction:column; gap:14px; min-width:0;}
+  .ch-info{text-align:center; min-width:0;}
+  .ch-info b{font-size:26px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+  .ch-info span{display:block; color:var(--dim); font-size:19px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ch-barra{height:6px; border-radius:3px; background:#26262f; overflow:hidden;}
+  .ch-barra i{display:block; height:100%; width:0; background:var(--a);}
+  .ch-tiempos{display:flex; justify-content:space-between; color:var(--dim); font-size:14px; font-variant-numeric:tabular-nums; margin-top:-8px;}
+  .ch-botones{display:flex; justify-content:center; align-items:center; gap:24px;}
+  .ch-botones button{width:84px; height:84px; border:none; border-radius:50%; background:var(--btn); color:var(--txt);
+    display:flex; align-items:center; justify-content:center;}
+  .ch-botones button:active{filter:brightness(1.4);}
+  .ch-botones svg{width:42%; height:42%; fill:currentColor;}
+  .ch-botones .ch-play{width:112px; height:112px; background:var(--a); color:#fff;}
+  .ch-play .i-pausa, .ch-play.sonando .i-play{display:none;}
+  .ch-play.sonando .i-pausa{display:block;}
+  .ch-siguiente{color:var(--dim); font-size:15px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ch-aviso{color:#ffd27a; font-size:15px; text-align:center; min-height:1.3em;}
+  @media (orientation:landscape){
+    .ch-cuerpo{flex-direction:row; align-items:center; gap:32px;}
+    .ch-portada{width:min(40vw,64vh);}
+    .ch-lado{flex:1;}
+  }
 </style>
 </head>
 <body>
@@ -167,6 +233,7 @@
           </div>
           <div class="label">
             <svg viewBox="0 0 24 24"><circle class="d" cx="12" cy="7" r="1.5"/><circle class="d" cx="8.5" cy="10" r="1.5"/><circle class="d" cx="15.5" cy="10" r="1.5"/><circle class="d" cx="10" cy="14" r="1.5"/><circle class="d" cx="14" cy="14" r="1.5"/><circle class="d" cx="12" cy="17.5" r="1.5"/></svg>
+            <img class="cover" data-cover alt="">
           </div>
         </div>
       </div>
@@ -183,6 +250,7 @@
   <div class="center">
     <div class="top-btns">
       <button class="rbtn home" data-menu aria-label="Menú"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v9h14v-9"/></svg><span class="dot"></span></button>
+      <button class="rbtn home" data-mixopen aria-label="Automático"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="14" y2="6"/><line x1="3" y1="12" x2="12" y2="12"/><line x1="3" y1="18" x2="10" y2="18"/><path d="M16 10l6 4-6 4z"/></svg></button>
     </div>
     <div class="meters">
       <div class="meter a"><i data-meter="a"></i></div>
@@ -222,6 +290,7 @@
           </div>
           <div class="label">
             <svg viewBox="0 0 24 24"><circle class="d" cx="12" cy="7" r="1.5"/><circle class="d" cx="8.5" cy="10" r="1.5"/><circle class="d" cx="15.5" cy="10" r="1.5"/><circle class="d" cx="10" cy="14" r="1.5"/><circle class="d" cx="14" cy="14" r="1.5"/><circle class="d" cx="12" cy="17.5" r="1.5"/></svg>
+            <img class="cover" data-cover alt="">
           </div>
         </div>
       </div>
@@ -260,11 +329,57 @@
   <div class="catresults" id="catresults"></div>
 </div>
 
+<!-- Automático (cola de temas) -->
+<div class="mixpop" id="mixpop">
+  <div class="mixhead">
+    <strong>Automático</strong>
+    <button data-mixadd>+ Temas</button>
+    <select id="mixlist"><option value="">Ordenar por lista…</option></select>
+    <button class="go" data-mixgo>▶ Empezar</button>
+    <button data-coche>🚗 Coche</button>
+    <button class="x" data-mixclose aria-label="Cerrar">✕</button>
+  </div>
+  <div class="mixstatus" id="mixstatus"></div>
+  <div class="mixqueue" id="mixqueue"></div>
+  <input type="file" id="mixfiles" multiple accept="audio/*,.mp3,.m4a,.aac,.wav,.aiff,.flac">
+</div>
+
 <div id="splash">
   <img src="icons/icon-512.png" alt="">
   <h1>Vinyl DJ Mobile</h1>
   <p>Gira el iPhone en horizontal. Carga los temas con “+” desde Archivos / iCloud Drive.</p>
   <button id="startBtn">Empezar</button>
+  <button id="cocheBtn" class="sec">🚗 Modo coche</button>
+</div>
+
+<!-- Modo coche -->
+<div class="cochepop" id="coche">
+  <div class="ch-top">
+    <button data-coche-salir>✕ Salir</button>
+    <span class="ch-cola" data-coche-cola></span>
+  </div>
+  <div class="ch-cuerpo">
+    <div class="ch-portada">
+      <svg viewBox="0 0 24 24"><circle class="d" cx="12" cy="7" r="1.5"/><circle class="d" cx="8.5" cy="10" r="1.5"/><circle class="d" cx="15.5" cy="10" r="1.5"/><circle class="d" cx="10" cy="14" r="1.5"/><circle class="d" cx="14" cy="14" r="1.5"/><circle class="d" cx="12" cy="17.5" r="1.5"/></svg>
+      <img data-coche-portada alt="">
+    </div>
+    <div class="ch-lado">
+      <div class="ch-info"><b data-coche-titulo>—</b><span data-coche-artista></span></div>
+      <div class="ch-barra"><i data-coche-progreso></i></div>
+      <div class="ch-tiempos"><span data-coche-pos>00:00</span><span data-coche-dur>00:00</span></div>
+      <div class="ch-botones">
+        <button data-coche-ant aria-label="Anterior"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5.5v13L8.5 12z"/></svg></button>
+        <button class="ch-play" data-coche-play aria-label="Reproducir o pausar">
+          <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="i-pausa" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        </button>
+        <button data-coche-sig aria-label="Siguiente"><svg viewBox="0 0 24 24"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5.5v13L15.5 12z"/></svg></button>
+      </div>
+      <div class="ch-siguiente" data-coche-siguiente></div>
+      <div class="ch-aviso" data-coche-aviso></div>
+    </div>
+  </div>
+  <audio id="cocheAudio" playsinline preload="auto"></audio>
 </div>
 
 <script>
@@ -274,6 +389,108 @@ let ctx = null, master = null;
 
 function xfGains(x){ return { a: x<=0 ? 1 : Math.max(0,1-x), b: x>=0 ? 1 : Math.max(0,1+x) }; }
 function fmt(t){ t=Math.max(0,t||0); const m=Math.floor(t/60), s=Math.floor(t%60); return (m<10?'0':'')+m+':'+(s<10?'0':'')+s; }
+
+// Keep the turntables perfectly circular: size each platter to the largest
+// square that fits its container (the CSS aspect trick distorted them).
+function sizePlatters(){
+  for(const el of document.querySelectorAll('.platter')){
+    const w=el.parentElement, s=Math.min(w.clientWidth, w.clientHeight);
+    if(s>0){ el.style.width=s+'px'; el.style.height=s+'px'; }
+  }
+}
+window.addEventListener('resize', sizePlatters);
+window.addEventListener('orientationchange', ()=> setTimeout(sizePlatters,300));
+
+// ---- embedded cover art (ID3v2 APIC / MP4 'covr') ----
+function synchsafe(u8,i){ return ((u8[i]&0x7f)<<21)|((u8[i+1]&0x7f)<<14)|((u8[i+2]&0x7f)<<7)|(u8[i+3]&0x7f); }
+function id3Apic(u8){
+  const ver=u8[3], size=synchsafe(u8,6), end=Math.min(u8.length,10+size), td=new TextDecoder('latin1');
+  let off=10;
+  while(off+10<=end){
+    const id=String.fromCharCode(u8[off],u8[off+1],u8[off+2],u8[off+3]);
+    let fsize = ver===4 ? synchsafe(u8,off+4) : ((u8[off+4]<<24)|(u8[off+5]<<16)|(u8[off+6]<<8)|u8[off+7])>>>0;
+    if(fsize<=0) break;
+    const fstart=off+10, fend=Math.min(end,fstart+fsize);
+    if(id==='APIC'){
+      let p=fstart; const enc=u8[p++];
+      let ms=p; while(p<fend && u8[p]!==0) p++; const mime=td.decode(u8.subarray(ms,p)); p++;
+      p++; // picture type byte
+      if(enc===1||enc===2){ while(p+1<fend && !(u8[p]===0&&u8[p+1]===0)) p+=2; p+=2; }
+      else { while(p<fend && u8[p]!==0) p++; p++; }
+      return { data:u8.subarray(p,fend), mime:mime||'image/jpeg' };
+    }
+    off=fstart+fsize;
+  }
+  return null;
+}
+function mp4Covr(u8){
+  const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);
+  function walk(start,end,path){
+    let off=start;
+    while(off+8<=end){
+      let size=dv.getUint32(off), hdr=8;
+      const type=String.fromCharCode(u8[off+4],u8[off+5],u8[off+6],u8[off+7]);
+      if(size===1){ try{ size=Number(dv.getBigUint64(off+8)); }catch(e){ return null; } hdr=16; }
+      if(size<8) return null;
+      const cend=Math.min(end,off+size);
+      if(type===path[0]){
+        let cs=off+hdr; if(type==='meta') cs+=4;
+        if(path.length===1) return cs;
+        const r=walk(cs,cend,path.slice(1)); if(r!=null) return r;
+      }
+      off+=size;
+    }
+    return null;
+  }
+  const covr=walk(0,u8.length,['moov','udta','meta','ilst','covr']);
+  if(covr==null) return null;
+  let off=covr;
+  while(off+16<=u8.length){
+    const size=dv.getUint32(off);
+    const type=String.fromCharCode(u8[off+4],u8[off+5],u8[off+6],u8[off+7]);
+    if(type==='data'){
+      const flags=dv.getUint32(off+8)&0xffffff;
+      return { data:u8.subarray(off+16, off+size), mime: flags===14?'image/png':'image/jpeg' };
+    }
+    if(size<8) break; off+=size;
+  }
+  return null;
+}
+function extractCover(ab, name){
+  try{
+    const u8=new Uint8Array(ab);
+    let art=null;
+    if(u8[0]===0x49&&u8[1]===0x44&&u8[2]===0x33) art=id3Apic(u8);   // 'ID3'
+    if(!art) art=mp4Covr(u8);
+    if(!art || !art.data || !art.data.length) return null;
+    return URL.createObjectURL(new Blob([art.data],{type:art.mime}));
+  }catch(e){ return null; }
+}
+
+// Online album-art lookup (iTunes Search API, free, via JSONP so no CORS
+// issues). Results cached in memory + localStorage. Returns a URL or null.
+const coverCache=new Map();
+try{ const saved=JSON.parse(localStorage.getItem('coverCache')||'{}'); for(const k in saved) coverCache.set(k,saved[k]); }catch(e){}
+function saveCoverCache(){ try{ const o={}; coverCache.forEach((v,k)=>{ if(v) o[k]=v; }); localStorage.setItem('coverCache', JSON.stringify(o)); }catch(e){} }
+function lookupCover(artist, title){
+  const key=((artist||'')+'|'+(title||'')).toLowerCase().trim();
+  if(!title) return Promise.resolve(null);
+  if(coverCache.has(key)) return Promise.resolve(coverCache.get(key));
+  const term=encodeURIComponent(((artist?artist+' ':'')+title).trim());
+  return new Promise(resolve=>{
+    const cb='__cb'+Math.floor(Math.random()*1e9);
+    const s=document.createElement('script'); let done=false;
+    const cleanup=()=>{ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } s.remove(); };
+    window[cb]=data=>{ done=true; let url=null;
+      try{ const r=data&&data.results&&data.results[0];
+        if(r&&r.artworkUrl100) url=r.artworkUrl100.replace('100x100bb','500x500bb'); }catch(e){}
+      coverCache.set(key,url); saveCoverCache(); cleanup(); resolve(url); };
+    s.onerror=()=>{ if(!done){ coverCache.set(key,null); cleanup(); resolve(null); } };
+    s.src='https://itunes.apple.com/search?media=music&entity=song&limit=1&term='+term+'&callback='+cb;
+    document.body.appendChild(s);
+    setTimeout(()=>{ if(!done){ cleanup(); resolve(null); } }, 6000);
+  });
+}
 
 class Deck {
   constructor(el, name){
@@ -289,6 +506,9 @@ class Deck {
     this.$tempo=el.querySelector('[data-tempo]');
     this.$spin=el.querySelector('[data-spin]');
     this.$platter=el.querySelector('[data-platter]');
+    this.$label=el.querySelector('.label');
+    this.$cover=el.querySelector('[data-cover]');
+    this._coverUrl=null; this._loadToken=0; this.salida=null;
     this.eq={low:50,mid:50,high:50,vol:100};
   }
   build(){
@@ -324,19 +544,47 @@ class Deck {
     p.addEventListener('touchstart',down,{passive:false}); p.addEventListener('touchmove',move,{passive:false}); p.addEventListener('touchend',up);
     p.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
   }
-  async loadFile(file){
-    if(!file) return; this.$title.textContent='Cargando…';
+  loadFile(file){ return this.loadBlob(file, file && file.name); }
+
+  /**
+   * Carga audio en el plato, venga de donde venga.
+   *
+   * Se separó de `loadFile` porque el automix no tiene ficheros elegidos a
+   * mano: saca los temas de la biblioteca guardada, que son Blobs. Y devuelve
+   * una promesa porque el automix necesita saber cuándo está listo para poder
+   * preparar el siguiente tema con antelación.
+   */
+  async loadBlob(blob, nombre){
+    if(!blob) return false;
+    nombre = nombre || 'tema';
+    this.$title.textContent='Cargando…';
     try{
-      this.buffer=await ctx.decodeAudioData(await file.arrayBuffer());
+      const ab=await blob.arrayBuffer();
+      const coverUrl=extractCover(ab, nombre);   // leer carátula ANTES de decodificar (decode puede consumir el buffer)
+      this.buffer=await ctx.decodeAudioData(ab);
       this.duration=this.buffer.duration; this.stopSource(); this.playing=false;
       this.offset=0; this.cuePoint=0; this.rotation=0; this.applyRotation();
       this.$play.classList.remove('on'); this.$play.textContent='▶';
       this.$title.style.color='var(--txt)';
-      let disp=file.name.replace(/\.[^.]+$/,'');
-      if(CAT && CAT.byfn){ const idx=CAT.byfn.get(file.name.toLowerCase());
-        if(idx!=null){ const t=CAT.tracks[idx]; if(t[0]) disp=t[0]+(t[1]?' — '+t[1]:''); } }
+
+      // Dónde termina de verdad y dónde conviene empezar a mezclar. Se calcula
+      // aquí, una sola vez, para que el automix no tenga que analizar nada con
+      // el tema ya sonando.
+      this.salida=analizarSalida(this.buffer);
+
+      let disp=nombre.replace(/\.[^.]+$/,'');
+      const idx = (CAT && CAT.byfn) ? CAT.byfn.get(claveFichero(nombre)) : null;
+      if(idx!=null){ const t=CAT.tracks[idx]; if(t[0]) disp=t[0]+(t[1]?' — '+t[1]:''); }
       this.$title.textContent=disp; this._expectName=null; this.updateClock();
-    }catch(err){ this.$title.textContent='No se pudo abrir'; console.error(err); }
+
+      let cArtist='', cTitle='';
+      if(idx!=null){ cTitle=CAT.tracks[idx][0]; cArtist=CAT.tracks[idx][1]; }
+      if(!cTitle) cTitle=nombre.replace(/\.[^.]+$/,'');
+      const token=++this._loadToken;
+      this.setCover(coverUrl, true);
+      if(!coverUrl){ lookupCover(cArtist,cTitle).then(url=>{ if(url && token===this._loadToken) this.setCover(url,false); }); }
+      return true;
+    }catch(err){ this.$title.textContent='No se pudo abrir'; console.error(err); return false; }
   }
   position(){ return this.playing ? this.startOffset+(ctx.currentTime-this.startTime)*this.rate : this.offset; }
   stopSource(){ if(this.source){ try{this.source.onended=null; this.source.stop();}catch(e){} this.source=null; } }
@@ -361,6 +609,11 @@ class Deck {
   setEqBand(b,v){ this.eq[b]=v;
     if(b==='vol'){ this.channel.gain.value=v/100; return; }
     const db=(v-50)/50*24; ({low:this.low,mid:this.mid,high:this.high})[b].gain.value=db; }
+  setCover(url, isObjectUrl){
+    if(this._coverUrl){ URL.revokeObjectURL(this._coverUrl); this._coverUrl=null; }
+    if(url){ if(isObjectUrl) this._coverUrl=url; this.$cover.src=url; this.$label.classList.add('has-cover'); }
+    else { this.$label.classList.remove('has-cover'); this.$cover.removeAttribute('src'); }
+  }
   applyRotation(){ this.$spin.style.transform='rotate('+(this.rotation%360)+'deg)'; }
   updateClock(){ this._clock=fmt(this.position())+' · '+fmt(this.duration); }
   meterLevel(){ if(!this.analyser) return 0; this.analyser.getByteTimeDomainData(this._an);
@@ -386,6 +639,10 @@ function initAudio(){
   const xf=document.getElementById('xfader');
   const applyXf=()=>{ const g=xfGains(xf.value/100); deckA.xf.gain.value=g.a; deckB.xf.gain.value=g.b; };
   xf.addEventListener('input',applyXf); applyXf();
+  // Si alguien mueve el fader con la mano mientras el automático está cruzando,
+  // gana la mano: se corta la animación y se queda donde lo dejen.
+  const aMano=()=>{ if(automix._cancelar) automix._cancelar(); };
+  xf.addEventListener('touchstart',aMano); xf.addEventListener('mousedown',aMano);
   let lastTap=0; xf.addEventListener('touchend',()=>{ const n=Date.now(); if(n-lastTap<300){ xf.value=0; applyXf(); } lastTap=n; });
 
   const mA=document.querySelector('[data-meter="a"]'), mB=document.querySelector('[data-meter="b"]');
@@ -401,9 +658,310 @@ function initAudio(){
     // show the clock of whichever deck is playing (A priority)
     const src = deckA.playing?deckA : (deckB.playing?deckB:deckA);
     clock.textContent = src._clock || '00:00 · 00:00';
+    vigilarAutomix();
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
+}
+
+// ---------------------------------------------------------------------------
+// Biblioteca guardada en el teléfono
+// ---------------------------------------------------------------------------
+//
+// El navegador no puede abrir tus ficheros por su ruta: solo ve los que eliges
+// a mano en Archivos. Para que el automix pueda encadenar temas sin pararse a
+// preguntar, hay que tener el audio ya disponible — así que se guarda una copia
+// dentro del propio navegador (IndexedDB).
+//
+// Es espacio duplicado en el iPhone, y es el precio de que iOS no deje a una
+// web mirar una carpeta. A cambio, la cola sigue ahí la próxima vez que abras y
+// solo hay que darle a Automático.
+
+/**
+ * La clave con la que se reconoce un fichero.
+ *
+ * Parece que bastaría con pasar el nombre a minúsculas, y no basta. macOS e
+ * iOS entregan los nombres de fichero en forma NFD —la «á» viaja como una «a»
+ * seguida de una tilde suelta— mientras que el catálogo, que viene de otro
+ * sitio, trae unos en NFD y otros en NFC. Comparar sin normalizar hace que un
+ * tercio de los temas con acento no se reconozcan, y el fallo no se ve: el
+ * tema simplemente aparece sin artista y las listas salen incompletas.
+ */
+function claveFichero(nombre){
+  return (nombre||'').normalize('NFC').toLowerCase();
+}
+
+const DB_NOME='vinyldj', DB_VER=1;
+let _db=null;
+
+/**
+ * Pedirle a iOS que no tire la biblioteca a la basura.
+ *
+ * Sin esto, Safari puede vaciar el almacenamiento de un sitio que lleve
+ * semanas sin abrirse — y te quedarías sin el set justo el día que lo
+ * necesitas. Con la app añadida a la pantalla de inicio suele concederse.
+ */
+async function pedirPersistencia(){
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      if(await navigator.storage.persisted()) return true;
+      return await navigator.storage.persist();
+    }
+  }catch(e){}
+  return false;
+}
+
+function abrirDB(){
+  if(_db) return Promise.resolve(_db);
+  return new Promise((ok,err)=>{
+    const r=indexedDB.open(DB_NOME,DB_VER);
+    r.onupgradeneeded=()=>{
+      const db=r.result;
+      if(!db.objectStoreNames.contains('temas')) db.createObjectStore('temas',{keyPath:'id'});
+      if(!db.objectStoreNames.contains('estado')) db.createObjectStore('estado',{keyPath:'k'});
+    };
+    r.onsuccess=()=>{ _db=r.result; ok(_db); };
+    r.onerror=()=>err(r.error);
+  });
+}
+
+function tx(store,modo){ return abrirDB().then(db=>db.transaction(store,modo).objectStore(store)); }
+function pedir(req){ return new Promise((ok,err)=>{ req.onsuccess=()=>ok(req.result); req.onerror=()=>err(req.error); }); }
+
+async function guardarTema(reg){ return pedir((await tx('temas','readwrite')).put(reg)); }
+async function leerTema(id){ return pedir((await tx('temas','readonly')).get(id)); }
+async function borrarTema(id){ return pedir((await tx('temas','readwrite')).delete(id)); }
+async function todosLosTemas(){ return pedir((await tx('temas','readonly')).getAll()); }
+async function guardarEstado(k,v){ return pedir((await tx('estado','readwrite')).put({k,v})); }
+async function leerEstado(k){ const r=await pedir((await tx('estado','readonly')).get(k)); return r? r.v : null; }
+
+/** Cuánto ocupa lo guardado, para poder enseñarlo antes de que sorprenda. */
+async function espacioUsado(){
+  try{
+    if(navigator.storage && navigator.storage.estimate){
+      const e=await navigator.storage.estimate();
+      return {usado:e.usage||0, total:e.quota||0};
+    }
+  }catch(e){}
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Dónde acaba de verdad una canción
+// ---------------------------------------------------------------------------
+//
+// Encadenar «a los 8 segundos del final» suena mal la mitad de las veces: a un
+// tema con fade de veinte segundos lo corta por la mitad, y a uno que termina
+// en seco lo solapa cuando todavía está sonando fuerte.
+//
+// Así que se mira el volumen. Se recorre el final del tema hacia atrás y se
+// buscan dos cosas: dónde deja de oírse (para no arrastrar el silencio del
+// final del fichero) y dónde empieza a bajar. Si entre esos dos puntos hay
+// recorrido, el tema tiene fade propio y la mezcla se hace encima de él. Si no
+// lo tiene, se solapan unos segundos fijos antes del corte.
+
+const MEZCLA_MAX=12, MEZCLA_SECA=6, MEZCLA_MIN=2.5;
+
+function analizarSalida(buffer){
+  const sr=buffer.sampleRate, canal=buffer.getChannelData(0);
+  const VENTANA=Math.max(1, Math.round(sr*0.25));     // 250 ms
+  const n=Math.floor(canal.length/VENTANA);
+  if(n<8) return {finAudible:buffer.duration, inicio:Math.max(0,buffer.duration-MEZCLA_SECA), duracion:MEZCLA_SECA};
+
+  // Nivel de cada ventana. Se salta muestras: con una de cada ocho basta para
+  // saber si algo suena, y así un tema de seis minutos se analiza al instante.
+  const nivel=new Float32Array(n);
+  for(let w=0; w<n; w++){
+    let suma=0, cuenta=0;
+    for(let i=w*VENTANA; i<(w+1)*VENTANA; i+=8){ const v=canal[i]; suma+=v*v; cuenta++; }
+    nivel[w]=Math.sqrt(suma/Math.max(1,cuenta));
+  }
+
+  // La referencia es la mediana del cuerpo del tema, no el pico: un golpe
+  // aislado no debe decidir qué se considera «sonando».
+  const cuerpo=Array.from(nivel.slice(Math.floor(n*0.1), Math.floor(n*0.85))).sort((a,b)=>a-b);
+  const ref=cuerpo.length? cuerpo[Math.floor(cuerpo.length/2)] : 0.05;
+  if(ref<=0.0001) return {finAudible:buffer.duration, inicio:Math.max(0,buffer.duration-MEZCLA_SECA), duracion:MEZCLA_SECA};
+
+  const seg=w=>(w*VENTANA)/sr;
+
+  // Última ventana que todavía se oye: por debajo del 8 % de la referencia ya
+  // es silencio o ruido de fondo, y no tiene sentido esperar a que acabe.
+  let fin=n-1;
+  while(fin>0 && nivel[fin] < ref*0.08) fin--;
+  const finAudible=Math.min(buffer.duration, seg(fin+1));
+
+  // Y desde ahí hacia atrás, hasta encontrar el sitio donde aún sonaba fuerte:
+  // ese es el principio del fade.
+  let caida=fin;
+  while(caida>0 && nivel[caida] < ref*0.75) caida--;
+  const inicioFade=seg(caida+1);
+
+  const largoFade=finAudible-inicioFade;
+  if(largoFade >= 3){
+    // Tiene fade propio: la mezcla entra encima, sin pasarse de largo.
+    const duracion=Math.min(largoFade, MEZCLA_MAX);
+    return {finAudible, inicio:finAudible-duracion, duracion};
+  }
+  // Corte seco: se solapan unos segundos antes del final.
+  const duracion=Math.min(MEZCLA_SECA, Math.max(MEZCLA_MIN, finAudible*0.1));
+  return {finAudible, inicio:Math.max(0, finAudible-duracion), duracion};
+}
+
+// ---------------------------------------------------------------------------
+// La cola y el automix
+// ---------------------------------------------------------------------------
+//
+// La cola es una lista de ids de la biblioteca guardada. El motor va sacando
+// temas de ahí y alternando los dos platos: mientras uno suena, el otro ya
+// tiene cargado el siguiente. Cuando el que suena llega a su punto de mezcla
+// —el que calculó `analizarSalida`— arranca el otro y el crossfader se mueve
+// solo de un lado al otro.
+//
+// El crossfader se anima de verdad, moviendo el mando: así se ve lo que está
+// pasando y, si quieres tomar el control, basta con tocarlo.
+
+const automix = {
+  activo:false,
+  fila:[],            // ids de temas, en orden
+  pos:-1,             // índice del que está sonando
+  deckActual:null,
+  mezclando:false,
+  preparado:null,     // id ya cargado en el plato libre
+  _cancelar:null,
+};
+
+function otroDeck(d){ return d===deckA ? deckB : deckA; }
+
+/** Mueve el crossfader (y la interfaz) a un valor de -1 a 1. */
+function ponerCrossfader(v){
+  const xf=document.getElementById('xfader');
+  xf.value=Math.round(Math.max(-1,Math.min(1,v))*100);
+  xf.dispatchEvent(new Event('input'));
+}
+
+/** Lleva el crossfader de donde esté hasta `destino` en `segundos`. */
+function animarCrossfader(destino, segundos){
+  const xf=document.getElementById('xfader');
+  const desde=parseFloat(xf.value)/100;
+  const t0=performance.now(), ms=Math.max(200, segundos*1000);
+  if(automix._cancelar) automix._cancelar();
+  let vivo=true;
+  automix._cancelar=()=>{ vivo=false; };
+  return new Promise(ok=>{
+    (function paso(now){
+      if(!vivo) return ok(false);
+      const k=Math.min(1,(now-t0)/ms);
+      // Suavizado en las puntas: una rampa recta se nota como un salto al
+      // empezar y al terminar.
+      const e=k<0.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2;
+      ponerCrossfader(desde+(destino-desde)*e);
+      if(k<1) requestAnimationFrame(paso); else ok(true);
+    })(performance.now());
+  });
+}
+
+/** Carga en `deck` el tema `id` de la biblioteca. */
+async function cargarDeLaBiblioteca(deck, id){
+  const reg=await leerTema(id);
+  if(!reg || !reg.blob) return false;
+  const ok=await deck.loadBlob(reg.blob, reg.nome);
+  // El análisis ya está hecho: se guarda para que el modo coche no tenga que repetirlo.
+  if(ok && deck.salida) guardarEstado('salida:'+id, deck.salida).catch(()=>{});
+  return ok;
+}
+
+/** Deja el siguiente tema listo en el plato que no está sonando. */
+async function prepararSiguiente(){
+  const sig=automix.fila[automix.pos+1];
+  if(!sig || automix.preparado===sig) return;
+  const libre=otroDeck(automix.deckActual);
+  if(libre.playing) return;                  // todavía suena el anterior
+  const ok=await cargarDeLaBiblioteca(libre, sig);
+  automix.preparado = ok ? sig : null;
+  if(!ok) { automix.fila.splice(automix.pos+1,1); guardarFila(); pintarFila(); }
+}
+
+/** Pasa al siguiente: arranca el otro plato y cruza el fader. */
+async function encadenar(){
+  if(automix.mezclando) return;
+  const sig=automix.fila[automix.pos+1];
+  if(sig==null){ pararAutomix('Fin de la cola.'); return; }
+
+  const saliendo=automix.deckActual, entrando=otroDeck(saliendo);
+  automix.mezclando=true;
+
+  if(automix.preparado!==sig){
+    const ok=await cargarDeLaBiblioteca(entrando, sig);
+    if(!ok){ automix.mezclando=false; automix.fila.splice(automix.pos+1,1); guardarFila(); pintarFila(); return; }
+  }
+
+  const dur = (saliendo.salida && saliendo.salida.duracion) || MEZCLA_SECA;
+  entrando.seek(0); entrando.play();
+  automix.pos++; automix.deckActual=entrando; automix.preparado=null;
+  pintarFila();
+
+  await animarCrossfader(entrando===deckA ? -1 : 1, dur);
+
+  // El que salía ya no se oye: se para para no gastar batería decodificando
+  // audio inaudible, y queda libre para el siguiente.
+  if(saliendo.playing) saliendo.pause();
+  automix.mezclando=false;
+  prepararSiguiente();
+}
+
+/** Se llama en cada fotograma; decide cuándo toca encadenar. */
+function vigilarAutomix(){
+  if(!automix.activo || automix.mezclando) return;
+  const d=automix.deckActual;
+  if(!d) return;
+
+  // Red de seguridad: si el tema se acabó sin que llegáramos a encadenar —un
+  // análisis que falló, un fichero más corto de lo que decía— la sesión no
+  // puede quedarse en silencio esperando. Se pasa al siguiente y ya está.
+  if(!d.playing){
+    if(d.buffer && d.position() >= d.duration-0.25) encadenar();
+    return;
+  }
+  if(!d.salida) return;
+
+  const t=d.position();
+
+  // Un poco antes del punto de mezcla, dejar el siguiente cargado: decodificar
+  // un MP3 en el teléfono tarda casi un segundo y no puede pillar al motor con
+  // el tema acabándose.
+  if(!automix.preparado && t > d.salida.inicio-20) prepararSiguiente();
+
+  if(t >= d.salida.inicio) encadenar();
+}
+
+async function arrancarAutomix(){
+  if(!automix.fila.length){ avisoAutomix('La cola está vacía. Añade temas primero.'); return; }
+  if(!ctx) initAudio();
+  if(ctx.state!=='running'){ try{ await ctx.resume(); }catch(e){} }
+
+  automix.activo=true;
+  automix.mezclando=false; automix.preparado=null;
+
+  // Si ya hay algo sonando, se sigue desde ahí; si no, se empieza por el principio.
+  if(!(deckA.playing || deckB.playing)){
+    automix.pos=0; automix.deckActual=deckA;
+    ponerCrossfader(-1);
+    const ok=await cargarDeLaBiblioteca(deckA, automix.fila[0]);
+    if(!ok){ pararAutomix('No se pudo abrir el primer tema.'); return; }
+    deckA.play();
+  } else {
+    automix.deckActual = deckA.playing ? deckA : deckB;
+    if(automix.pos<0) automix.pos=0;
+  }
+  pintarFila(); prepararSiguiente();
+}
+
+function pararAutomix(motivo){
+  automix.activo=false; automix.mezclando=false;
+  if(automix._cancelar) automix._cancelar();
+  pintarFila();
+  if(motivo) avisoAutomix(motivo);
 }
 
 // ---- Catálogo offline (buscador de tu biblioteca) ----
@@ -420,7 +978,7 @@ async function loadCatalog(){
   try{
     const r=await fetch('catalog.json'); CAT=await r.json();
     CAT.hay=CAT.tracks.map(t=>(t[0]+' '+t[1]+' '+t[2]).toLowerCase());
-    CAT.byfn=new Map(); CAT.tracks.forEach((t,i)=>{ if(t[3]) CAT.byfn.set(t[3].toLowerCase(),i); });
+    CAT.byfn=new Map(); CAT.tracks.forEach((t,i)=>{ if(t[3]) CAT.byfn.set(claveFichero(t[3]),i); });
     catplaylist.innerHTML='<option value="">Todo el catálogo</option>'+
       CAT.playlists.map((p,i)=>`<option value="${i}">${escapeHtml(p.n)} (${p.t.length})</option>`).join('');
     catstatus.textContent=CAT.tracks.length.toLocaleString('es')+' temas · '+CAT.playlists.length+' listas';
@@ -456,9 +1014,558 @@ document.querySelector('[data-menu]').addEventListener('click', async ()=>{
   catpop.classList.add('show'); await loadCatalog(); renderCat(); catsearch.focus();
 });
 
+// ---------------------------------------------------------------------------
+// El panel del automático
+// ---------------------------------------------------------------------------
+
+const mixpop=document.getElementById('mixpop'),
+      mixqueue=document.getElementById('mixqueue'),
+      mixstatus=document.getElementById('mixstatus'),
+      mixfiles=document.getElementById('mixfiles'),
+      mixlist=document.getElementById('mixlist');
+
+function avisoAutomix(txt){ mixstatus.textContent=txt; }
+
+/** El id de un tema es su nombre de fichero: es lo que lo une al catálogo. */
+function idDeNombre(nombre){ return claveFichero(nombre); }
+
+async function guardarFila(){ try{ await guardarEstado('fila', automix.fila); }catch(e){} }
+
+const _etiquetas=new Map();   // id → {titulo, artista} leídos del propio fichero
+
+/**
+ * Título y artista de un tema: del catálogo si lo conoce, de las etiquetas del
+ * fichero si ya se leyeron, y del nombre del fichero si no hay otra cosa.
+ */
+function tituloDe(id, nombreGuardado){
+  const idx=(CAT && CAT.byfn) ? CAT.byfn.get(id) : null;
+  if(idx!=null){ const t=CAT.tracks[idx]; return {titulo:t[0]||t[3], artista:t[1]||''}; }
+  const e=_etiquetas.get(id);
+  const nombre=(nombreGuardado||id).replace(/\.[^.]+$/,'');
+  if(e) return {titulo:e.titulo||nombre, artista:e.artista||''};
+  return {titulo:nombre, artista:''};
+}
+
+let _nombres=new Map();   // id → nombre de fichero, para pintar sin ir a la BD
+
+function pintarFila(){
+  // El botón vive fuera de la lista, pero su estado depende del motor: se
+  // actualiza aquí para que no haya dos sitios que puedan discrepar.
+  const btn=document.querySelector('[data-mixgo]');
+  if(btn){
+    btn.textContent = automix.activo ? '■ Parar' : '▶ Empezar';
+    btn.classList.toggle('on', automix.activo);
+  }
+  if(!automix.fila.length){
+    mixqueue.innerHTML='<div class="mixempty">La cola está vacía.<br>Pulsa <b>+ Temas</b> y elige varios ficheros de Archivos o iCloud.<br>Se guardan en el teléfono: la próxima vez ya estarán aquí.</div>';
+    return;
+  }
+  mixqueue.innerHTML=automix.fila.map((id,i)=>{
+    const {titulo,artista}=tituloDe(id,_nombres.get(id));
+    const sonando = automix.activo && i===automix.pos;
+    return `<div class="mixrow${sonando?' now':''}">`
+      +`<span class="num">${sonando?'▶':(i+1)}</span>`
+      +`<div class="info"><b>${escapeHtml(titulo)}</b><div class="sub">${escapeHtml(artista||'—')}</div></div>`
+      +`<button class="mv" data-sube="${i}" aria-label="Subir">▲</button>`
+      +`<button class="del" data-quita="${i}" aria-label="Quitar">✕</button></div>`;
+  }).join('');
+}
+
+async function refrescarEspacio(){
+  const n=automix.fila.length;
+  const e=await espacioUsado();
+  const mb = e ? ' · '+(e.usado/1048576).toFixed(0)+' MB guardados' : '';
+  avisoAutomix(n ? `${n} ${n===1?'tema':'temas'} en la cola${mb}` : 'Sin temas todavía.');
+}
+
+/** Mete en la biblioteca los ficheros que el usuario acaba de elegir. */
+async function anadirFicheros(lista){
+  const ficheros=Array.from(lista||[]);
+  if(!ficheros.length) return;
+  let n=0;
+  for(const f of ficheros){
+    const id=idDeNombre(f.name);
+    _nombres.set(id, f.name);
+    avisoAutomix(`Guardando ${++n} de ${ficheros.length}…`);
+    try{
+      await guardarTema({ id, nome:f.name, blob:f, addedAt:Date.now() });
+      if(!automix.fila.includes(id)) automix.fila.push(id);
+    }catch(err){
+      // Lo más probable es que el iPhone se haya quedado sin sitio.
+      console.error(err);
+      avisoAutomix('No cabe más. Quita temas de la cola para hacer sitio.');
+      break;
+    }
+  }
+  await guardarFila(); pintarFila(); refrescarEspacio();
+}
+
+/**
+ * Ordena la cola siguiendo una de tus listas.
+ *
+ * La lista del catálogo tiene los temas que quieres y en qué orden, pero no el
+ * audio. Así que se cruza: lo que esté guardado se coloca en el orden de la
+ * lista, y de lo que falte se dice cuánto es, para que sepas qué te queda por
+ * añadir.
+ */
+async function ordenarPorLista(indice){
+  if(indice==='' || !CAT) return;
+  const lista=CAT.playlists[+indice];
+  const enLista=[], sueltos=[...automix.fila];
+
+  for(const ti of lista.t){
+    const nome=(CAT.tracks[ti]||[])[3];
+    if(!nome) continue;
+    const id=idDeNombre(nome);
+    const k=sueltos.indexOf(id);
+    if(k>=0){ enLista.push(id); sueltos.splice(k,1); }
+  }
+
+  automix.fila=[...enLista, ...sueltos];
+  await guardarFila(); pintarFila();
+  const faltan=lista.t.length-enLista.length;
+  avisoAutomix(`«${lista.n}»: ${enLista.length} de ${lista.t.length} en el teléfono`
+    + (faltan>0 ? ` · faltan ${faltan} por añadir` : '') );
+}
+
+async function abrirAutomix(){
+  mixpop.classList.add('show');
+  pedirPersistencia();
+  await loadCatalog();
+  mixlist.innerHTML='<option value="">Ordenar por lista…</option>'+
+    (CAT ? CAT.playlists.map((pl,i)=>`<option value="${i}">${escapeHtml(pl.n)} (${pl.t.length})</option>`).join('') : '');
+
+  // La cola y los nombres se recuperan de lo guardado la vez anterior.
+  if(!automix.fila.length){
+    const guardada=await leerEstado('fila');
+    if(Array.isArray(guardada)) automix.fila=guardada;
+  }
+  if(!_nombres.size){
+    try{ (await todosLosTemas()).forEach(r=> _nombres.set(r.id, r.nome)); }catch(e){}
+  }
+  pintarFila(); refrescarEspacio();
+}
+
+document.querySelector('[data-mixopen]').addEventListener('click', abrirAutomix);
+document.querySelector('[data-mixclose]').addEventListener('click', ()=> mixpop.classList.remove('show'));
+document.querySelector('[data-mixadd]').addEventListener('click', ()=> mixfiles.click());
+mixfiles.addEventListener('change', e=>{ anadirFicheros(e.target.files); e.target.value=''; });
+mixlist.addEventListener('change', ()=> ordenarPorLista(mixlist.value));
+
+document.querySelector('[data-mixgo]').addEventListener('click', async ev=>{
+  const btn=ev.currentTarget;
+  if(automix.activo){ pararAutomix('Automático parado.'); btn.textContent='▶ Empezar'; btn.classList.remove('on'); return; }
+  btn.textContent='■ Parar'; btn.classList.add('on');
+  await arrancarAutomix();
+  if(!automix.activo){ btn.textContent='▶ Empezar'; btn.classList.remove('on'); }
+  else mixpop.classList.remove('show');   // fuera de en medio: ya está sonando
+});
+
+mixqueue.addEventListener('click', async e=>{
+  const sube=e.target.closest('[data-sube]'), quita=e.target.closest('[data-quita]');
+  if(sube){
+    const i=+sube.dataset.sube; if(i<=0) return;
+    const f=automix.fila; [f[i-1],f[i]]=[f[i],f[i-1]];
+    if(automix.pos===i) automix.pos=i-1; else if(automix.pos===i-1) automix.pos=i;
+    await guardarFila(); pintarFila();
+  }
+  if(quita){
+    const i=+quita.dataset.quita, id=automix.fila[i];
+    automix.fila.splice(i,1);
+    if(automix.pos>=i) automix.pos--;
+    // El audio se borra también: si sale de la cola, no tiene sentido que siga
+    // ocupando sitio en el teléfono.
+    try{ if(!automix.fila.includes(id)) await borrarTema(id); }catch(err){}
+    await guardarFila(); pintarFila(); refrescarEspacio();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Modo coche
+// ---------------------------------------------------------------------------
+//
+// En el coche el iPhone va bloqueado y lo que se mira es la pantalla de
+// CarPlay. Se probó en el iPhone qué deja hacer iOS a una web así
+// (prueba-fondo.html, 10-sep-2026, iOS 18.7): la mezcla con Web Audio se corta
+// al bloquear y la app se queda congelada; un reproductor <audio> normal sigue
+// sonando, pasa de tema él solo, la app no se congela y el título sale en la
+// pantalla de bloqueo. Por eso aquí no hay platos: un reproductor y un tema
+// detrás de otro, con la misma cola del automático.
+//
+// Lo que se pierde es el fundido. iOS no deja cambiar el volumen de un
+// <audio>, así que no se puede bajar un tema mientras sube el otro. Para que al
+// menos no haya huecos se usa el análisis del automix y se salta el silencio
+// del final de cada tema.
+
+const cochepop=document.getElementById('coche'), cocheAudio=document.getElementById('cocheAudio');
+const $c=sel=>cochepop.querySelector(sel);
+const coche={
+  activo:false,
+  pos:0, id:null,
+  url:null,          // el tema que suena, como URL del Blob guardado
+  portada:null,
+  salida:null,       // dónde deja de oírse (analizarSalida)
+  token:0,           // cada cambio de tema lo sube: lo que llegue tarde de otro tema se descarta
+  saltando:false, terminado:false, fallos:0, guardadoEn:0,
+};
+
+/** Un instante de silencio: sirve para desbloquear el reproductor con el toque. */
+let _silencio=null;
+function silencio(){
+  if(_silencio) return _silencio;
+  const n=800, b=new ArrayBuffer(44+n*2), v=new DataView(b);
+  const s=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); };
+  s(0,'RIFF'); v.setUint32(4,36+n*2,true); s(8,'WAVE'); s(12,'fmt '); v.setUint32(16,16,true);
+  v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,8000,true); v.setUint32(28,16000,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true); s(36,'data'); v.setUint32(40,n*2,true);
+  return (_silencio=URL.createObjectURL(new Blob([b],{type:'audio/wav'})));
+}
+
+/** Título y artista de las etiquetas ID3 de un MP3, si las tiene. */
+function id3Textos(u8){
+  if(!(u8[0]===0x49&&u8[1]===0x44&&u8[2]===0x33)) return null;
+  const ver=u8[3], end=Math.min(u8.length,10+synchsafe(u8,6)), out={};
+  let off=10;
+  while(off+10<=end){
+    const id=String.fromCharCode(u8[off],u8[off+1],u8[off+2],u8[off+3]);
+    if(!/^[A-Z0-9]{4}$/.test(id)) break;
+    const fsize = ver===4 ? synchsafe(u8,off+4) : ((u8[off+4]<<24)|(u8[off+5]<<16)|(u8[off+6]<<8)|u8[off+7])>>>0;
+    if(fsize<=0) break;
+    const fstart=off+10, fend=Math.min(end,fstart+fsize);
+    if(id==='TIT2' || id==='TPE1'){
+      const enc=u8[fstart]; let cuerpo=u8.subarray(fstart+1,fend), cod='utf-8';
+      if(enc===0) cod='latin1';
+      else if(enc===2) cod='utf-16be';
+      else if(enc===1){
+        cod = (cuerpo[0]===0xFE && cuerpo[1]===0xFF) ? 'utf-16be' : 'utf-16le';
+        if((cuerpo[0]===0xFE && cuerpo[1]===0xFF) || (cuerpo[0]===0xFF && cuerpo[1]===0xFE)) cuerpo=cuerpo.subarray(2);
+      }
+      let txt=''; try{ txt=new TextDecoder(cod).decode(cuerpo); }catch(e){}
+      txt=txt.split('\u0000')[0].trim();   // el texto puede venir terminado en nulos
+      if(txt) out[id==='TIT2'?'titulo':'artista']=txt;
+    }
+    off=fstart+fsize;
+  }
+  return (out.titulo || out.artista) ? out : null;
+}
+
+/**
+ * La parte del fichero donde van portada y etiquetas.
+ *
+ * En un MP3 van al principio y la cabecera dice cuánto ocupan, así que no hace
+ * falta leer el tema entero. En un M4A pueden ir al final y se lee todo. En el
+ * resto (WAV, FLAC, AIFF) no se buscan.
+ */
+async function leerCabecera(blob){
+  const h=new Uint8Array(await blob.slice(0,12).arrayBuffer());
+  if(h[0]===0x49&&h[1]===0x44&&h[2]===0x33) return blob.slice(0, Math.min(blob.size, 10+synchsafe(h,6))).arrayBuffer();
+  if(String.fromCharCode(h[4],h[5],h[6],h[7])==='ftyp') return blob.arrayBuffer();
+  return null;
+}
+
+/**
+ * Dónde deja de oírse un tema guardado.
+ *
+ * Se calcula una vez y se guarda. Los análisis van de uno en uno: descomprimir
+ * un tema entero ocupa bastante memoria, y se hace con otro sonando.
+ */
+let _colaAnalisis=Promise.resolve();
+function salidaDe(id){
+  const p=_colaAnalisis.then(async()=>{
+    const hecha=await leerEstado('salida:'+id).catch(()=>null);
+    if(hecha) return hecha;
+    const reg=await leerTema(id);
+    if(!reg || !reg.blob) return null;
+    // A 22 kHz: para saber dónde se acaba el sonido sobra, y ocupa la mitad.
+    const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    const buf=await new OAC(1,1,22050).decodeAudioData(await reg.blob.arrayBuffer());
+    const s=analizarSalida(buf);
+    guardarEstado('salida:'+id, s).catch(()=>{});
+    return s;
+  }).catch(e=>{ console.warn('No se pudo analizar', id, e); return null; });
+  _colaAnalisis=p;
+  return p;
+}
+
+let _avisoCoche=null;
+function cocheAviso(txt, fijo){
+  $c('[data-coche-aviso]').textContent=txt||'';
+  clearTimeout(_avisoCoche);
+  if(txt && !fijo) _avisoCoche=setTimeout(()=>{ $c('[data-coche-aviso]').textContent=''; }, 6000);
+}
+
+function sonandoCoche(){ return coche.activo && !cocheAudio.paused && cocheAudio.src===coche.url; }
+
+function pintarBotonCoche(){ $c('[data-coche-play]').classList.toggle('sonando', sonandoCoche()); }
+
+function pintarProgreso(){
+  const d=cocheAudio.duration, t=cocheAudio.currentTime||0;
+  const ok=isFinite(d) && d>0 && cocheAudio.src===coche.url;
+  $c('[data-coche-progreso]').style.width = ok ? Math.min(100,t/d*100)+'%' : '0%';
+  $c('[data-coche-pos]').textContent = ok ? fmt(t) : '00:00';
+  $c('[data-coche-dur]').textContent = ok ? fmt(d) : '00:00';
+}
+
+function pintarCoche(){
+  const fila=automix.fila, id=coche.id;
+  const {titulo,artista} = id ? tituloDe(id,_nombres.get(id)) : {titulo:'—', artista:''};
+  $c('[data-coche-titulo]').textContent=titulo;
+  $c('[data-coche-artista]').textContent=artista || ' ';
+  $c('[data-coche-cola]').textContent = (id && fila.length) ? `${coche.pos+1} / ${fila.length}` : '';
+  const sig=fila[coche.pos+1];
+  let despues='';
+  if(sig){ const t=tituloDe(sig,_nombres.get(sig)); despues='Después: '+t.titulo+(t.artista?' — '+t.artista:''); }
+  else if(id) despues='Último tema de la cola';
+  $c('[data-coche-siguiente]').textContent=despues;
+  const caja=$c('.ch-portada'), img=$c('[data-coche-portada]');
+  if(coche.portada){ img.src=coche.portada; caja.classList.add('con'); }
+  else { caja.classList.remove('con'); img.removeAttribute('src'); }
+  pintarBotonCoche(); pintarProgreso();
+}
+
+/** Título y portada para la pantalla de bloqueo y la de CarPlay. */
+function cocheTitulo(){
+  const ms=navigator.mediaSession;
+  if(!ms || !coche.id) return;
+  const {titulo,artista}=tituloDe(coche.id,_nombres.get(coche.id));
+  const icono=new URL('icons/icon-512.png', location.href).href;
+  try{
+    ms.metadata=new MediaMetadata({ title:titulo, artist:artista, album:'Vinyl DJ',
+      artwork: coche.portada ? [{src:coche.portada, sizes:'512x512'}] : [{src:icono, sizes:'512x512', type:'image/png'}] });
+  }catch(e){}
+}
+
+function posicionSesion(){
+  const ms=navigator.mediaSession, d=cocheAudio.duration;
+  if(!ms || !ms.setPositionState || !isFinite(d) || d<=0) return;
+  try{ ms.setPositionState({duration:d, position:Math.min(d,cocheAudio.currentTime||0), playbackRate:1}); }catch(e){}
+}
+
+/**
+ * Los botones del volante, de CarPlay y de la pantalla de bloqueo.
+ *
+ * No se ponen «adelantar/retroceder 10 s»: si existen, iOS los enseña en lugar
+ * de «siguiente/anterior», y en el coche lo que se quiere es cambiar de tema.
+ */
+function cocheBotonesSistema(activar){
+  const ms=navigator.mediaSession;
+  if(!ms) return;
+  const h = activar ? {
+    play:()=>cocheToggle(true),
+    pause:()=>cocheToggle(false),
+    nexttrack:()=>cocheSiguiente(),
+    previoustrack:()=>cocheAnterior(),
+    seekto:d=>{ if(d && isFinite(d.seekTime)){ cocheAudio.currentTime=d.seekTime; posicionSesion(); } },
+  } : {};
+  for(const a of ['play','pause','nexttrack','previoustrack','seekto','seekbackward','seekforward']){
+    try{ ms.setActionHandler(a, h[a]||null); }catch(e){}
+  }
+  if(!activar){ try{ ms.metadata=null; ms.playbackState='none'; }catch(e){} }
+}
+
+/**
+ * Darle al play, con reintentos.
+ *
+ * En la prueba iOS canceló el primer intento («The operation was aborted») y
+ * al momento sonó igual. Así que un aborto se reintenta; un «no permitido» no,
+ * porque eso es iOS pidiendo que se toque la pantalla.
+ */
+async function cocheReproducir(){
+  for(let intento=0; intento<3; intento++){
+    const src=cocheAudio.src;
+    try{ await cocheAudio.play(); coche.fallos=0; pintarBotonCoche(); return true; }
+    catch(e){
+      if(e && e.name==='NotAllowedError'){ cocheAviso('Toca ▶ para que empiece a sonar.', true); pintarBotonCoche(); return false; }
+      if(cocheAudio.src!==src) return false;          // mientras tanto se cambió de tema
+      await new Promise(r=>setTimeout(r,400));
+      if(!cocheAudio.paused) return true;
+    }
+  }
+  return false;
+}
+
+function guardarPosCoche(ya){
+  if(!coche.id) return;
+  const ahora=Date.now();
+  if(!ya && ahora-coche.guardadoEn<5000) return;
+  coche.guardadoEn=ahora;
+  guardarEstado('cochePos', {pos:coche.pos, id:coche.id, t:cocheAudio.currentTime||0}).catch(()=>{});
+}
+
+/** Pone a sonar el tema `pos` de la cola, desde el segundo `desde`. */
+async function cochePoner(pos, desde=0){
+  const fila=automix.fila;
+  const token=++coche.token;
+  coche.saltando=false; coche.terminado=false;
+  pos=Math.max(0,pos);
+  if(pos>=fila.length){ cocheFin(); return; }
+
+  const id=fila[pos];
+  let reg=null;
+  try{ reg=await leerTema(id); }catch(e){}
+  if(token!==coche.token) return;
+  if(!reg || !reg.blob){
+    cocheAviso(`«${tituloDe(id,_nombres.get(id)).titulo}» ya no está en el teléfono. Paso al siguiente.`);
+    return cochePoner(pos+1);
+  }
+
+  coche.pos=pos; coche.id=id; coche.salida=null; automix.pos=pos;
+  const urlVieja=coche.url, portadaVieja=coche.portada;
+  coche.url=URL.createObjectURL(reg.blob); coche.portada=null;
+  cocheAudio.src=coche.url;
+  if(urlVieja) URL.revokeObjectURL(urlVieja);
+  if(desde>1){
+    cocheAudio.addEventListener('loadedmetadata', ()=>{
+      if(token===coche.token){ try{ cocheAudio.currentTime=desde; }catch(e){} }
+    }, {once:true});
+  }
+  pintarCoche(); cocheTitulo();
+  if(portadaVieja && portadaVieja.startsWith('blob:')) URL.revokeObjectURL(portadaVieja);
+
+  await cocheReproducir();
+  guardarPosCoche(true);
+
+  cocheMeta(reg, token);
+  salidaDe(id).then(s=>{ if(coche.id===id) coche.salida=s; });
+  if(fila[pos+1]) salidaDe(fila[pos+1]);        // el siguiente, analizado con tiempo
+}
+
+/** Lee portada y etiquetas del tema que suena, cuando ya está sonando. */
+async function cocheMeta(reg, token){
+  let portada=null;
+  try{
+    const ab=await leerCabecera(reg.blob);
+    if(ab){
+      const et=id3Textos(new Uint8Array(ab));
+      if(et) _etiquetas.set(reg.id, et);
+      portada=extractCover(ab, reg.nome);
+    }
+  }catch(e){}
+  if(token!==coche.token){ if(portada) URL.revokeObjectURL(portada); return; }
+  if(!portada){
+    const {titulo,artista}=tituloDe(reg.id, reg.nome);
+    portada=await lookupCover(artista,titulo).catch(()=>null);
+    if(token!==coche.token) return;
+  }
+  coche.portada=portada;
+  pintarCoche(); cocheTitulo();
+}
+
+function cocheSiguiente(){ return cochePoner(coche.pos+1); }
+
+function cocheAnterior(){
+  // Como en cualquier reproductor: con el tema ya empezado, vuelve a su principio.
+  if((cocheAudio.currentTime||0)>4 || coche.pos===0){ cocheAudio.currentTime=0; posicionSesion(); return; }
+  cochePoner(coche.pos-1);
+}
+
+function cocheFin(){
+  coche.terminado=true;
+  cocheAudio.pause();
+  guardarEstado('cochePos', null).catch(()=>{});
+  cocheAviso('Fin de la cola. Toca ▶ para volver a empezar.', true);
+  pintarBotonCoche();
+}
+
+function cocheToggle(sonar){
+  if(sonar===undefined) sonar=!sonandoCoche();
+  if(sonar){
+    if(coche.terminado){ cocheAviso(''); cochePoner(0); return; }
+    if(cocheAudio.src!==coche.url || !coche.url){ cochePoner(coche.pos); return; }
+    cocheAviso(''); cocheReproducir();
+  } else {
+    cocheAudio.pause();
+  }
+}
+
+cocheAudio.addEventListener('timeupdate', ()=>{
+  if(!coche.activo || cocheAudio.src!==coche.url) return;
+  pintarProgreso();
+  guardarPosCoche(false);
+  // En cuanto el tema deja de oírse, el siguiente: sin esperar al silencio del final.
+  const s=coche.salida, t=cocheAudio.currentTime, d=cocheAudio.duration;
+  if(s && !coche.saltando && isFinite(d) && t>=s.finAudible-0.2 && t<d-0.3){ coche.saltando=true; cocheSiguiente(); }
+});
+cocheAudio.addEventListener('ended', ()=>{
+  if(coche.activo && cocheAudio.src===coche.url && !coche.saltando){ coche.saltando=true; cocheSiguiente(); }
+});
+cocheAudio.addEventListener('error', ()=>{
+  if(!coche.activo || cocheAudio.src!==coche.url) return;
+  if(++coche.fallos>=3){ cocheAviso('Varios temas seguidos no se pueden reproducir. Parado.', true); return; }
+  cocheAviso('Este tema no se puede reproducir. Paso al siguiente.');
+  cocheSiguiente();
+});
+// Si iOS pausa la música (una llamada, o al desconectar el coche) no se vuelve
+// a arrancar sola: al bajar del coche empezaría a sonar por el altavoz del
+// iPhone. Se sigue con el play del volante o de la pantalla.
+for(const ev of ['play','pause']) cocheAudio.addEventListener(ev, ()=>{ if(coche.activo){ pintarBotonCoche(); posicionSesion(); } });
+cocheAudio.addEventListener('loadedmetadata', ()=>{ if(coche.activo){ pintarProgreso(); posicionSesion(); } });
+document.addEventListener('visibilitychange', ()=>{ if(coche.activo && !document.hidden) pintarCoche(); });
+
+async function entrarCoche(){
+  // Lo primero, antes de cualquier espera: iOS solo deja arrancar el
+  // reproductor dentro del mismo toque. Con un instante de silencio queda
+  // desbloqueado, y a partir de ahí ya se le puede cambiar de tema sin tocar.
+  cocheAudio.src=silencio();
+  const p=cocheAudio.play(); if(p) p.catch(()=>{});
+  // Que el interruptor de silencio del iPhone no lo apague.
+  if(navigator.audioSession){ try{ navigator.audioSession.type='playback'; }catch(e){} }
+
+  // Los platos se sueltan del todo. En la prueba, el motor de los platos y el
+  // reproductor a la vez acababan con el sonido entrando y saliendo.
+  if(automix.activo) pararAutomix();
+  for(const d of [deckA,deckB]) if(d && d.playing) d.pause();
+  if(ctx && ctx.state==='running') ctx.suspend().catch(()=>{});
+
+  coche.activo=true;
+  document.body.classList.add('en-coche');
+  cochepop.classList.add('show');
+  mixpop.classList.remove('show');
+  document.getElementById('splash').style.display='none';
+  cocheBotonesSistema(true);
+  pedirPersistencia();
+
+  if(!automix.fila.length){ const g=await leerEstado('fila').catch(()=>null); if(Array.isArray(g)) automix.fila=g; }
+  if(!_nombres.size){ try{ (await todosLosTemas()).forEach(r=>_nombres.set(r.id, r.nome)); }catch(e){} }
+  if(!automix.fila.length){
+    coche.id=null; pintarCoche();
+    cocheAviso('La cola está vacía. Sal y añade temas en Automático.', true);
+    return;
+  }
+
+  // Seguir donde se quedó la última vez, si ese tema sigue en la cola.
+  let pos = automix.pos>0 ? automix.pos : 0, desde=0;
+  const donde=await leerEstado('cochePos').catch(()=>null);
+  if(donde && automix.fila[donde.pos]===donde.id){ pos=donde.pos; desde=donde.t||0; }
+  await cochePoner(pos, desde);
+}
+
+function salirCoche(){
+  guardarPosCoche(true);
+  coche.activo=false; coche.token++;
+  cocheAudio.pause();
+  cocheBotonesSistema(false);
+  cocheAviso('');
+  cochepop.classList.remove('show');
+  document.body.classList.remove('en-coche');
+  // Vuelta a los platos. Si se entró al coche directamente desde la portada,
+  // el motor de audio todavía no existe: este toque sirve para crearlo.
+  initAudio(); if(ctx.state!=='running') ctx.resume().catch(()=>{});
+  document.getElementById('splash').style.display='none';
+  requestAnimationFrame(sizePlatters); setTimeout(sizePlatters,350);
+}
+
+document.getElementById('cocheBtn').addEventListener('click', entrarCoche);
+document.querySelector('[data-coche]').addEventListener('click', entrarCoche);
+$c('[data-coche-salir]').addEventListener('click', salirCoche);
+$c('[data-coche-play]').addEventListener('click', ()=> cocheToggle());
+$c('[data-coche-sig]').addEventListener('click', ()=> cocheSiguiente());
+$c('[data-coche-ant]').addEventListener('click', ()=> cocheAnterior());
+
 document.getElementById('startBtn').addEventListener('click', async ()=>{
   initAudio(); if(ctx.state!=='running'){ try{ await ctx.resume(); }catch(e){} }
   document.getElementById('splash').style.display='none';
+  requestAnimationFrame(sizePlatters); setTimeout(sizePlatters,350);
 });
 
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{})); }

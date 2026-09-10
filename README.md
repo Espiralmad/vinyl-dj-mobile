@@ -29,6 +29,39 @@ pulsa **Empezar**, y en cada plato **📂 Cargar** para elegir un tema de Archiv
 - **VOL** — nivel del canal.
 - **Crossfader** — mezcla A ⟷ B (doble toque = centrar).
 
+## Automático (cola de temas)
+
+Botón central de la lista con ▶. **+ Temas** elige varios ficheros de Archivos/iCloud
+y guarda una copia en el teléfono (IndexedDB), para que la cola siga ahí la próxima
+vez. **▶ Empezar** alterna los dos platos y cruza el crossfader solo, en el punto
+donde cada tema deja de sonar fuerte (`analizarSalida`).
+
+## Modo coche
+
+**🚗 Modo coche** en la portada, o **🚗 Coche** en el panel del automático. Pantalla
+sencilla (vertical u horizontal) que reproduce la misma cola con un `<audio>`
+normal, sin platos:
+
+- Sigue sonando y pasa de tema **con el iPhone bloqueado**, y sale en la pantalla
+  de bloqueo y en CarPlay («A reproducir») con título y portada.
+- Los botones del volante / CarPlay / AirPods hacen play, pausa, siguiente y anterior.
+- Salta el silencio del final de cada tema. **Sin fundido**: iOS no deja cambiar
+  el volumen de un `<audio>`.
+- Recuerda por dónde iba. Si iOS la pausa (llamada, desconectar el coche) **no
+  vuelve a arrancar sola**, para no ponerse a sonar por el altavoz al bajar.
+
+Por qué así y no con los platos: `prueba-fondo.html` (10-sep-2026, iOS 18.7). Con el
+iPhone bloqueado, Web Audio se interrumpe y la app se congela; un `<audio>` sigue.
+Una web no puede tener icono propio en la pantalla de CarPlay (eso es solo de apps
+nativas).
+
+## Pruebas
+
+```
+node probar-salida.mjs   # dónde acaba cada tema (automix y modo coche)
+node probar-coche.mjs    # modo coche en Chrome sin ventana (necesita Chrome)
+```
+
 ## Límites de iOS (a propósito)
 
 - **Sin pre-escucha por cascos**: iOS manda todo el audio a una sola salida; no hay
